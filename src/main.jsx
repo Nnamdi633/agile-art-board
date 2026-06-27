@@ -115,8 +115,15 @@ class JiraService {
   }
 
   async getIssueChangelog(issueKey) {
-    const data = await this.apiFetch(`/rest/api/3/issue/${issueKey}?expand=changelog`);
-    return data.changelog?.histories || [];
+    // Try dedicated changelog endpoint first (Jira v3), fall back to expand=changelog
+    try {
+      const data = await this.apiFetch(`/rest/api/3/issue/${issueKey}/changelog?maxResults=100`);
+      return data.values || [];
+    } catch (e) {
+      // Fallback to expand approach
+      const data = await this.apiFetch(`/rest/api/3/issue/${issueKey}?expand=changelog`);
+      return data.changelog?.histories || [];
+    }
   }
 }
 
@@ -1109,14 +1116,20 @@ export default function ARTHealthBoard() {
           // Fetch changelog for bottleneck (only for active sprint to limit API calls)
           if (group.state === "active" && epics.length > 0) {
             setProgress(`Loading bottleneck data: ${art.short} / ${group.cleanName} (${Math.min(epics.length, 20)} epics)...`);
+            let changelogSuccessCount = 0;
+            let changelogFailCount = 0;
             for (const epic of epics.slice(0, 20)) {
               try {
                 const histories = await jira.getIssueChangelog(epic.key);
+                // Sort chronologically — Jira returns newest-first
+                histories.sort((a, b) => new Date(a.created) - new Date(b.created));
                 const statusTimes = {};
                 let lastStatusChange = null;
+                let statusTransitions = 0;
                 for (const h of histories) {
                   for (const item of h.items || []) {
                     if (item.field === "status") {
+                      statusTransitions++;
                       if (lastStatusChange && item.fromString) {
                         const from = new Date(lastStatusChange);
                         const to = new Date(h.created);
@@ -1128,8 +1141,18 @@ export default function ARTHealthBoard() {
                   }
                 }
                 epic.timeInStatus = statusTimes;
-              } catch (e) { /* skip individual changelog failures */ }
+                changelogSuccessCount++;
+                if (Object.keys(statusTimes).length > 0) {
+                  console.log(`  ⏱ ${epic.key}: ${statusTransitions} transitions, statuses:`, statusTimes);
+                } else {
+                  console.log(`  ⏱ ${epic.key}: ${histories.length} history entries, ${statusTransitions} status transitions, NO time data`);
+                }
+              } catch (e) {
+                changelogFailCount++;
+                console.warn(`  ⏱ ${epic.key}: changelog FAILED — ${e.message}`);
+              }
             }
+            console.log(`  📊 Bottleneck summary for ${art.key} ${group.cleanName}: ${changelogSuccessCount} success, ${changelogFailCount} failed`);
           }
 
           consolidatedSprints.push({
@@ -1378,3 +1401,4 @@ export default function ARTHealthBoard() {
 
 // ─── RENDER ────────────────────────────────────────────────────────────────
 createRoot(document.getElementById("root")).render(<ARTHealthBoard />);
+
