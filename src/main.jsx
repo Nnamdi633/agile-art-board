@@ -1,7 +1,37 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from "recharts";
-import { Settings, ChevronLeft, ChevronRight, X, Loader2, AlertTriangle, CheckCircle2, Activity, BarChart3, TrendingUp, RefreshCw, Eye, EyeOff } from "lucide-react";
+import { Settings, ChevronLeft, ChevronRight, X, Loader2, AlertTriangle, CheckCircle2, Activity, BarChart3, TrendingUp, RefreshCw, Eye, EyeOff, Search } from "lucide-react";
+
+// ─── LOGO (base64 embedded) ─────────────────────────────────────────────────
+const STERLING_LOGO = "data:image/png;base64," + "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";
+
+// ─── CREDENTIAL STORAGE (obfuscated in localStorage) ─────────────────────────
+const CRED_KEY = "sfh_art_cred_v1";
+function saveCredentials(config) {
+  try {
+    const encoded = btoa(JSON.stringify({ d: config.domain, e: config.email, t: config.token }));
+    localStorage.setItem(CRED_KEY, encoded);
+  } catch (e) { console.warn("Could not save credentials:", e); }
+}
+function loadCredentials() {
+  try {
+    const stored = localStorage.getItem(CRED_KEY);
+    if (!stored) return null;
+    const decoded = JSON.parse(atob(stored));
+    return { domain: decoded.d || "", email: decoded.e || "", token: decoded.t || "" };
+  } catch (e) { return null; }
+}
+function clearCredentials() {
+  try { localStorage.removeItem(CRED_KEY); } catch(e) {}
+}
+
+// ─── FAVICON SETTER ──────────────────────────────────────────────────────────
+function setFavicon(url) {
+  let link = document.querySelector("link[rel*='icon']");
+  if (!link) { link = document.createElement("link"); link.rel = "icon"; document.head.appendChild(link); }
+  link.href = url;
+}
 
 // ─── CONFIGURATION ───────────────────────────────────────────────────────────
 const ART_CONFIG = {
@@ -115,8 +145,65 @@ class JiraService {
   }
 
   async getIssueChangelog(issueKey) {
-    const data = await this.apiFetch(`/rest/api/3/issue/${issueKey}?expand=changelog`);
-    return data.changelog?.histories || [];
+    // Try dedicated changelog endpoint first (Jira v3), fall back to expand=changelog
+    try {
+      const data = await this.apiFetch(`/rest/api/3/issue/${issueKey}/changelog?maxResults=100`);
+      return data.values || [];
+    } catch (e) {
+      // Fallback to expand approach
+      const data = await this.apiFetch(`/rest/api/3/issue/${issueKey}?expand=changelog`);
+      return data.changelog?.histories || [];
+    }
+  }
+
+  async getIssueDetails(issueKey) {
+    const data = await this.apiFetch(`/rest/api/3/issue/${issueKey}?expand=changelog&fields=key,summary,status,description,project,${REQUEST_TYPE_FIELD},customfield_10020,created,updated`);
+    const histories = data.changelog?.histories || [];
+    histories.sort((a, b) => new Date(a.created) - new Date(b.created));
+
+    // Extract sprint history
+    const sprintField = data.fields?.customfield_10020 || [];
+    const sprintHistory = sprintField.map(s => ({
+      name: s.name, state: s.state, boardId: s.boardId,
+      startDate: s.startDate, endDate: s.endDate, completeDate: s.completeDate,
+    }));
+
+    // Extract last 5 activities
+    const recentActivities = histories.slice(-5).reverse().map(h => ({
+      date: h.created,
+      author: h.author?.displayName || "Unknown",
+      changes: (h.items || []).map(item => ({
+        field: item.field,
+        from: item.fromString || "(none)",
+        to: item.toString || "(none)",
+      })),
+    }));
+
+    // Extract description text
+    let description = "";
+    try {
+      const desc = data.fields?.description;
+      if (typeof desc === "string") description = desc;
+      else if (desc?.content) {
+        description = desc.content.map(block =>
+          (block.content || []).map(c => c.text || "").join("")
+        ).join("\n");
+      }
+    } catch(e) { description = ""; }
+
+    return {
+      key: data.key,
+      summary: data.fields?.summary || "",
+      status: data.fields?.status?.name || "Unknown",
+      description,
+      requestType: data.fields?.[REQUEST_TYPE_FIELD]?.value || data.fields?.[REQUEST_TYPE_FIELD]?.name || "N/A",
+      project: data.fields?.project?.name || "Unknown",
+      projectKey: data.fields?.project?.key || "",
+      created: data.fields?.created,
+      updated: data.fields?.updated,
+      sprintHistory,
+      recentActivities,
+    };
   }
 }
 
@@ -351,7 +438,7 @@ function generateInsights(art, sprints, trendData, bottleneckData, deliveryRows,
 }
 
 // ─── BANK SUMMARY COLUMN ─────────────────────────────────────────────────────
-function BankSummaryColumn({ bankKey, bankLabel, bankColor, trendData, onClickIssues }) {
+function BankSummaryColumn({ bankKey, bankLabel, bankColor, trendData, bottleneckData, onClickIssues }) {
   const ttip = { background: theme.tooltipBg, border: `1px solid ${theme.cardBorder}`, borderRadius: 8, fontSize: 11, color: theme.text };
 
   // Compute aggregate % delivery per sprint
@@ -361,6 +448,8 @@ function BankSummaryColumn({ bankKey, bankLabel, bankColor, trendData, onClickIs
     total: d.planned,
     delivered: d.delivered,
   }));
+
+  const maxB = Math.max(...(bottleneckData || []).map(d => d.hours), 1);
 
   const MiniChart = ({ title, dk1, dk2, c1, c2, n1, n2 }) => (
     <div>
@@ -429,6 +518,26 @@ function BankSummaryColumn({ bankKey, bankLabel, bankColor, trendData, onClickIs
             </table>
           </div>
         </div>
+
+        {/* Bottleneck Chart */}
+        {bottleneckData && bottleneckData.some(d => d.hours > 0) && (
+          <div>
+            <div style={{ fontSize: 10, color: theme.textMuted, fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 4 }}>Bottleneck (Avg Hours)</div>
+            <ResponsiveContainer width="100%" height={130}>
+              <BarChart data={bottleneckData} margin={{ top: 5, right: 5, left: -15, bottom: 25 }} barCategoryGap="15%">
+                <CartesianGrid strokeDasharray="3 3" stroke={theme.grid} />
+                <XAxis dataKey="status" tick={{ fontSize: 6, fill: theme.textDim }} angle={-45} textAnchor="end" interval={0} height={45} />
+                <YAxis tick={{ fontSize: 7, fill: theme.textDim }} />
+                <Tooltip contentStyle={ttip} formatter={(val, name, props) => [`${val}h`, props.payload.fullStatus]} />
+                <Bar dataKey="hours" radius={[3, 3, 0, 0]}>
+                  {bottleneckData.map((entry, i) => (
+                    <Cell key={i} fill={entry.hours > maxB * 0.7 ? theme.danger : entry.hours > maxB * 0.4 ? theme.warning : bankColor} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -811,6 +920,124 @@ function ARTColumn({ art, sprints, allPiData, currentPi }) {
   );
 }
 
+// ─── ISSUE SEARCH MODAL ──────────────────────────────────────────────────────
+function IssueSearchModal({ config, onClose }) {
+  const [query, setQuery] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [issue, setIssue] = useState(null);
+
+  const search = async () => {
+    if (!query.trim()) return;
+    setLoading(true);
+    setError(null);
+    setIssue(null);
+    try {
+      const jira = new JiraService(config.domain, config.email, config.token);
+      const details = await jira.getIssueDetails(query.trim().toUpperCase());
+      setIssue(details);
+    } catch (e) {
+      setError(e.message);
+    }
+    setLoading(false);
+  };
+
+  const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—";
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }} onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={{ background: theme.card, border: `1px solid ${theme.cardBorder}`, borderRadius: 16, padding: 24, maxWidth: 800, width: "95%", maxHeight: "85vh", overflow: "auto" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <h3 style={{ color: theme.text, margin: 0, fontSize: 16 }}>Issue Lookup</h3>
+          <button onClick={onClose} style={{ background: "none", border: "none", color: theme.textMuted, cursor: "pointer" }}><X size={18} /></button>
+        </div>
+        <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+          <input value={query} onChange={e => setQuery(e.target.value)} onKeyDown={e => e.key === "Enter" && search()} placeholder="Enter issue key (e.g. BOA-4293)" style={{ flex: 1, padding: "10px 14px", background: theme.surface, border: `1px solid ${theme.cardBorder}`, borderRadius: 8, color: theme.text, fontSize: 13, outline: "none" }} autoFocus />
+          <button onClick={search} disabled={loading || !query.trim()} style={{ padding: "10px 16px", background: theme.accent, color: "#fff", border: "none", borderRadius: 8, fontWeight: 600, cursor: "pointer", fontSize: 13, display: "flex", alignItems: "center", gap: 5 }}>
+            {loading ? <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> : <Search size={14} />} Search
+          </button>
+        </div>
+        {error && <div style={{ padding: "8px 12px", background: `${theme.danger}15`, borderRadius: 8, color: theme.danger, fontSize: 11, marginBottom: 12 }}>{error}</div>}
+        {issue && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            {/* Header */}
+            <div style={{ background: theme.surface, borderRadius: 10, padding: 14 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                <div>
+                  <span style={{ color: theme.accent, fontFamily: "monospace", fontWeight: 700, fontSize: 14 }}>{issue.key}</span>
+                  <div style={{ color: theme.text, fontSize: 14, fontWeight: 600, marginTop: 4 }}>{issue.summary}</div>
+                </div>
+                <StatusBadge status={issue.status} />
+              </div>
+              <div style={{ display: "flex", gap: 16, marginTop: 10, flexWrap: "wrap" }}>
+                {[
+                  { label: "Project", val: issue.project },
+                  { label: "Request Type", val: issue.requestType },
+                  { label: "Created", val: fmtDate(issue.created) },
+                  { label: "Updated", val: fmtDate(issue.updated) },
+                ].map(({ label, val }) => (
+                  <div key={label}><div style={{ fontSize: 9, color: theme.textDim, textTransform: "uppercase" }}>{label}</div><div style={{ fontSize: 11, color: theme.textMuted, fontWeight: 600 }}>{val}</div></div>
+                ))}
+              </div>
+            </div>
+
+            {/* Description */}
+            {issue.description && (
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: theme.textMuted, textTransform: "uppercase", marginBottom: 4 }}>Description</div>
+                <div style={{ background: theme.surface, borderRadius: 8, padding: 10, fontSize: 12, color: theme.text, lineHeight: 1.5, maxHeight: 120, overflowY: "auto", whiteSpace: "pre-wrap" }}>{issue.description}</div>
+              </div>
+            )}
+
+            {/* Sprint History */}
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: theme.textMuted, textTransform: "uppercase", marginBottom: 4 }}>Sprint History ({issue.sprintHistory.length})</div>
+              <div style={{ borderRadius: 8, border: `1px solid ${theme.cardBorder}`, overflow: "hidden" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10 }}>
+                  <thead><tr style={{ background: theme.surface }}>{["Sprint", "State", "Board", "Start", "End", "Completed"].map(h => <th key={h} style={{ padding: "5px 8px", textAlign: "left", color: theme.textDim, fontWeight: 600 }}>{h}</th>)}</tr></thead>
+                  <tbody>{issue.sprintHistory.map((s, i) => (
+                    <tr key={i} style={{ borderBottom: `1px solid ${theme.cardBorder}22` }}>
+                      <td style={{ padding: "4px 8px", color: theme.text }}>{cleanSprintName(s.name)}</td>
+                      <td style={{ padding: "4px 8px" }}><StatusBadge status={s.state} /></td>
+                      <td style={{ padding: "4px 8px", color: theme.textMuted }}>{s.boardId}</td>
+                      <td style={{ padding: "4px 8px", color: theme.textMuted }}>{fmtDate(s.startDate)}</td>
+                      <td style={{ padding: "4px 8px", color: theme.textMuted }}>{fmtDate(s.endDate)}</td>
+                      <td style={{ padding: "4px 8px", color: theme.textMuted }}>{fmtDate(s.completeDate)}</td>
+                    </tr>
+                  ))}</tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Last 5 Activities */}
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: theme.textMuted, textTransform: "uppercase", marginBottom: 4 }}>Last 5 Activities</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {issue.recentActivities.map((act, i) => (
+                  <div key={i} style={{ background: theme.surface, borderRadius: 8, padding: 10 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                      <span style={{ fontSize: 10, color: theme.accent, fontWeight: 600 }}>{act.author}</span>
+                      <span style={{ fontSize: 9, color: theme.textDim }}>{fmtDate(act.date)}</span>
+                    </div>
+                    {act.changes.map((c, j) => (
+                      <div key={j} style={{ fontSize: 10, color: theme.textMuted, marginTop: 2 }}>
+                        <span style={{ color: theme.textDim }}>{c.field}:</span>{" "}
+                        <span style={{ textDecoration: "line-through", opacity: 0.5 }}>{c.from}</span>{" → "}
+                        <span style={{ color: theme.text }}>{c.to}</span>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+                {issue.recentActivities.length === 0 && <div style={{ color: theme.textDim, fontSize: 11 }}>No recent activity</div>}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── SETTINGS MODAL ──────────────────────────────────────────────────────────
 function SettingsModal({ config, onSave, onClose }) {
   const [form, setForm] = useState(config);
@@ -880,6 +1107,9 @@ function SettingsModal({ config, onSave, onClose }) {
             Cancel
           </button>
         </div>
+        <button onClick={() => { clearCredentials(); set("email", ""); set("token", ""); setTestResult({ ok: false, error: "Credentials cleared from browser storage" }); }} style={{ marginTop: 10, padding: "6px 12px", background: "transparent", color: theme.danger, border: `1px solid ${theme.danger}33`, borderRadius: 6, cursor: "pointer", fontSize: 10, width: "100%" }}>
+          Clear saved credentials from browser
+        </button>
       </div>
     </div>
   );
@@ -887,8 +1117,10 @@ function SettingsModal({ config, onSave, onClose }) {
 
 // ─── MAIN APP ────────────────────────────────────────────────────────────────
 export default function ARTHealthBoard() {
-  const [config, setConfig] = useState({ domain: "sterlingbank", email: "", token: "" });
+  const [config, setConfig] = useState(() => loadCredentials() || { domain: "sterlingbank", email: "", token: "" });
   const [showSettings, setShowSettings] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [progress, setProgress] = useState("");
@@ -907,6 +1139,18 @@ export default function ARTHealthBoard() {
   configRef.current = config;
   const rawSprintsRef = useRef(rawSprints);
   rawSprintsRef.current = rawSprints;
+
+  // Set favicon on mount
+  useEffect(() => { setFavicon(STERLING_LOGO); document.title = "ART Health Board — Sterling Financial Holdings"; }, []);
+
+  // Auto-connect on mount if credentials exist
+  useEffect(() => {
+    const saved = loadCredentials();
+    if (saved && saved.domain && saved.email && saved.token) {
+      setConfig(saved); configRef.current = saved;
+      setTimeout(() => fetchPIs(saved), 500);
+    }
+  }, []);
 
   // Initialize with mock data
   useEffect(() => {
@@ -1007,7 +1251,9 @@ export default function ARTHealthBoard() {
       rawSprintsRef.current = allSprints;
       setPiOptions(piList);
       setProgress("");
-      setShowPiPrompt(true); // Show prompt to select PI
+      setShowPiPrompt(true);
+      setConnected(true);
+      saveCredentials(c);
 
       if (failedBoards.length > 0) {
         setError(`Connected but ${failedBoards.length} board(s) failed: ${failedBoards.map(f => f.art).join(", ")}. Check board IDs.`);
@@ -1109,14 +1355,20 @@ export default function ARTHealthBoard() {
           // Fetch changelog for bottleneck (only for active sprint to limit API calls)
           if (group.state === "active" && epics.length > 0) {
             setProgress(`Loading bottleneck data: ${art.short} / ${group.cleanName} (${Math.min(epics.length, 20)} epics)...`);
+            let changelogSuccessCount = 0;
+            let changelogFailCount = 0;
             for (const epic of epics.slice(0, 20)) {
               try {
                 const histories = await jira.getIssueChangelog(epic.key);
+                // Sort chronologically — Jira returns newest-first
+                histories.sort((a, b) => new Date(a.created) - new Date(b.created));
                 const statusTimes = {};
                 let lastStatusChange = null;
+                let statusTransitions = 0;
                 for (const h of histories) {
                   for (const item of h.items || []) {
                     if (item.field === "status") {
+                      statusTransitions++;
                       if (lastStatusChange && item.fromString) {
                         const from = new Date(lastStatusChange);
                         const to = new Date(h.created);
@@ -1128,8 +1380,18 @@ export default function ARTHealthBoard() {
                   }
                 }
                 epic.timeInStatus = statusTimes;
-              } catch (e) { /* skip individual changelog failures */ }
+                changelogSuccessCount++;
+                if (Object.keys(statusTimes).length > 0) {
+                  console.log(`  ⏱ ${epic.key}: ${statusTransitions} transitions, statuses:`, statusTimes);
+                } else {
+                  console.log(`  ⏱ ${epic.key}: ${histories.length} history entries, ${statusTransitions} status transitions, NO time data`);
+                }
+              } catch (e) {
+                changelogFailCount++;
+                console.warn(`  ⏱ ${epic.key}: changelog FAILED — ${e.message}`);
+              }
             }
+            console.log(`  📊 Bottleneck summary for ${art.key} ${group.cleanName}: ${changelogSuccessCount} success, ${changelogFailCount} failed`);
           }
 
           consolidatedSprints.push({
@@ -1224,6 +1486,11 @@ export default function ARTHealthBoard() {
     return Object.values(epicMap);
   }
 
+  function getBankBottleneck(bankKey) {
+    const allEpics = getOpenSprintIssues(bankKey);
+    return calcBottleneck(allEpics);
+  }
+
   // Carousel scroll
   const scrollCarousel = (dir) => {
     if (carouselRef.current) {
@@ -1241,27 +1508,22 @@ export default function ARTHealthBoard() {
         position: "sticky", top: 0, zIndex: 100,
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <div style={{
-            width: 36, height: 36, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center",
-            background: `linear-gradient(135deg, ${theme.accent}, ${theme.purple})`,
-          }}>
-            <Activity size={20} color="#fff" />
-          </div>
+          <img src={STERLING_LOGO} alt="Sterling" style={{ width: 36, height: 36, borderRadius: 10 }} />
           <div>
             <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: -0.3 }}>Sterling Financial Holdings</div>
-            <div style={{ fontSize: 11, color: theme.textDim }}>ART Health Board</div>
+            <div style={{ fontSize: 11, color: theme.textDim }}>ART Health Board {connected && <span style={{ color: theme.success }}>● Connected</span>}</div>
           </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          {useMock && (
-            <div style={{ padding: "4px 10px", background: `${theme.warning}22`, color: theme.warning, borderRadius: 6, fontSize: 10, fontWeight: 600 }}>
-              DEMO MODE
-            </div>
-          )}
-          {loading && <Loader2 size={16} className="spin" style={{ color: theme.accent, animation: "spin 1s linear infinite" }} />}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {useMock && <div style={{ padding: "4px 10px", background: `${theme.warning}22`, color: theme.warning, borderRadius: 6, fontSize: 10, fontWeight: 600 }}>DEMO MODE</div>}
+          {loading && <Loader2 size={16} style={{ color: theme.accent, animation: "spin 1s linear infinite" }} />}
+          <button onClick={() => setShowSearch(true)} disabled={!connected}
+            style={{ padding: "6px 12px", background: theme.surface, border: `1px solid ${theme.cardBorder}`, borderRadius: 8, color: connected ? theme.text : theme.textDim, cursor: connected ? "pointer" : "not-allowed", fontSize: 11, display: "flex", alignItems: "center", gap: 5 }}>
+            <Search size={12} /> Search Issue
+          </button>
           <button onClick={() => fetchPIs()} disabled={loading || !config.domain}
             style={{ padding: "6px 12px", background: theme.surface, border: `1px solid ${theme.cardBorder}`, borderRadius: 8, color: theme.textMuted, cursor: config.domain ? "pointer" : "not-allowed", fontSize: 11, display: "flex", alignItems: "center", gap: 5, fontWeight: 600 }}>
-            <RefreshCw size={12} /> Sync Jira
+            <RefreshCw size={12} /> Refresh
           </button>
           <div style={{ position: "relative" }}>
             <select value={selectedPi} onChange={e => handlePiSelect(e.target.value)} disabled={piOptions.length === 0 || loading}
@@ -1316,6 +1578,7 @@ export default function ARTHealthBoard() {
               bankLabel={label}
               bankColor={color}
               trendData={getSummaryTrend(bank)}
+              bottleneckData={getBankBottleneck(bank)}
               onClickIssues={() => {
                 const issues = getOpenSprintIssues(bank);
                 setModalIssues(issues);
@@ -1359,6 +1622,7 @@ export default function ARTHealthBoard() {
 
       {/* ── Modals ────────────────────────────────── */}
       {showSettings && <SettingsModal config={config} onSave={handleSaveConfig} onClose={() => setShowSettings(false)} />}
+      {showSearch && <IssueSearchModal config={config} onClose={() => setShowSearch(false)} />}
       {modalIssues && <IssueModal issues={modalIssues} title={modalTitle} onClose={() => setModalIssues(null)} />}
 
       <style>{`
@@ -1378,3 +1642,4 @@ export default function ARTHealthBoard() {
 
 // ─── RENDER ────────────────────────────────────────────────────────────────
 createRoot(document.getElementById("root")).render(<ARTHealthBoard />);
+
